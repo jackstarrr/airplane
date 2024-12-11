@@ -1,15 +1,17 @@
-import Vue from 'vue'
-import Router from 'vue-router'
-import HelloWorld from '@/components/HelloWorld'
+import { createRouter, createWebHistory } from 'vue-router';  // Vue Router 4 使用 createRouter 和 createWebHistory
+import LoginPage from '../views/LoginPage.vue';
+import RegisterPage from '../views/RegisterPage.vue';
+import MainPage from '../views/MainPage.vue';
 
-Vue.use(Router)
+const routes = [
+  { path: '/', component: LoginPage },
+  { path: '/register', component: RegisterPage },
+  { path: '/main', component: MainPage }
+];
 
-export default new Router({
-  routes: [
-    {
-      path: '/',
-      name: 'HelloWorld',
-      component: HelloWorld
-    }
-  ]
-})
+const router = createRouter({
+  history: createWebHistory(),  // 使用 history 模式
+  routes
+});
+
+export default router;
