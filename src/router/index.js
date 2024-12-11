@@ -1,15 +1,33 @@
-import Vue from 'vue'
-import Router from 'vue-router'
-import HelloWorld from '@/components/HelloWorld'
+import { createRouter, createWebHistory } from 'vue-router';
+import LoginPage from '../views/LoginPage.vue';
+import MainPage from '../views/MainPage.vue';
+import RegisterPage from '../views/RegisterPage.vue';
 
-Vue.use(Router)
+const routes = [
+  {
+    path: '/',
+    redirect: '/login' // 将根路径重定向到登录页面
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: LoginPage
+  },
+  {
+    path: '/main',
+    name: 'Main',
+    component: MainPage
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: RegisterPage
+  }
+];
 
-export default new Router({
-  routes: [
-    {
-      path: '/',
-      name: 'HelloWorld',
-      component: HelloWorld
-    }
-  ]
-})
+const router = createRouter({
+  history: createWebHistory(process.env.BASE_URL),
+  routes
+});
+
+export default router;
