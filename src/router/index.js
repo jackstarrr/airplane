@@ -15,8 +15,12 @@ import orderList from '../pages/orderList';
 import addPassager from '../pages/addPassager';
 import recharge from '../pages/recharge';
 import orderDetail from '../pages/orderDetail';
+import userInformation from '../pages/userInformation';
+import updatePassword from '../pages/updatePassword';
+import updateInformation from '../pages/updateInformation';
 
 Vue.use(Router)
+
 
 export default new Router({
   routes: [
@@ -94,6 +98,21 @@ export default new Router({
       path: '/orderDetail',
       name: 'orderDetail',
       component: orderDetail
+    },
+    {
+      path: '/userInformation',
+      name: 'userInformation',
+      component: userInformation
+    },
+    {
+      path: '/updatePassword',
+      name: 'updatePassword',
+      component: updatePassword
+    },
+    {
+      path: '/updateInformation',
+      name: 'updateInformation',
+      component: updateInformation
     }
   ],
   mode: 'history',
@@ -104,4 +123,8 @@ export default new Router({
       }
     }
   }
+
+
 })
+
+

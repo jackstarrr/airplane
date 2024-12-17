@@ -32,24 +32,29 @@
 </template>
 
 <script>
+import axios from 'axios'; // 导入 axios
 import loginIcon from "@/assets/iconImages/login.png";
 import userIcon from "@/assets/iconImages/user.png";
 import passwordIcon from "@/assets/iconImages/password.png";
 import inputItem from "./components/inputItem";
 import submitBtn from "./components/submitButton";
+
 export default {
   data() {
     return {
       loginIcon: loginIcon,
       userIcon: userIcon,
-      passwordIcon: passwordIcon
+      passwordIcon: passwordIcon,
+      userName: '', // 添加用户名存储
+      psd: '',      // 添加密码存储
+      userList: []  // 存储用户列表
     };
   },
   created() {
     let users = JSON.parse(localStorage.getItem("users"));
-    let userData = JSON.parse(localStorage.getItem("user-data"));
-    this.userList = users.list;
-    this.userDataList = userData.res;
+    if (users) {
+      this.userList = users.list;
+    }
   },
   methods: {
     toRegister() {
@@ -63,28 +68,40 @@ export default {
     getPsd(value) {
       this.psd = value;
     },
-    login() {
-      let isRegistered = false;
-      for (let i = 0; i < this.userList.length; i++) {
-        // 用户名存在
-        if (this.userList[i].name == this.userName) {
-          isRegistered = true;
-          // 密码正确，去首页
-          if (this.userList[i].password == this.psd) {
-            this.$router.push({
-              path: "/home",
-              query: {
-                uid: this.userList[i].uid
-              }
-            });
-          } else {
-            // 密码不正确
-            this.$toast.center("密码不正确！");
-          }
+    async login() {
+      try {
+        // 发送登录请求到后端
+        const response = await axios.post('/user/login', {
+          username: this.userName,
+          password: this.psd
+        });
+
+        // this.$router.push({
+        //
+        //   path: "/home"
+        // });
+
+        if (response.data.code === 200) {
+          // 登录成功，跳转到首页
+          this.$toast.bottom("登录成功");
+
+          // 后端返回的 token 存储
+          const token = response.data.message; // 后端返回的 token
+          localStorage.setItem("token", token); // 将 token 存储到 localStorage（可根据实际需要选择存储方式）
+
+          this.$router.push({
+            path: "/home"
+          });
+        } else {
+          this.$toast.bottom("用户名或密码错误");
         }
-      }
-      if (!isRegistered) {
-        this.$toast.center('该用户名不存在，请先注册');
+      } catch (error) {
+        if (error.response) {
+          // 服务器返回的错误信息
+          this.$toast.center(error.response.data.message);
+        } else {
+          this.$toast.center('网络错误，请稍后重试');
+        }
       }
     }
   },
@@ -94,6 +111,7 @@ export default {
   }
 };
 </script>
+
 
 <style lang="stylus" scoped>
 @import '../../stylus/common.styl';

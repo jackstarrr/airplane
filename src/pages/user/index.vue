@@ -33,6 +33,18 @@
         <div class="item-desc">常用乘机人</div>
         <img :src="passagerIcon" />
       </div>
+      <div class="item fx-v-center fx-m-between" @click="goUpdatePassword">
+        <div class="item-desc">修改密码</div>
+        <img :src="passagerIcon" />
+      </div>
+      <div class="item fx-v-center fx-m-between" @click="goUpdateInformation">
+        <div class="item-desc">修改信息</div>
+        <img :src="passagerIcon" />
+      </div>
+      <div class="item fx-v-center fx-m-between" @click="goUserInformation">
+        <div class="item-desc">用户信息</div>
+        <img :src="passagerIcon" />
+      </div>
     </div>
   </div>
 </template>
@@ -77,6 +89,33 @@ export default {
     goPassager() {
       this.$router.push({
         path: '/passager',
+        query: {
+          uid: this.uid
+        }
+      })
+    },
+    // 跳转个人信息页面
+    goUserInformation() {
+      this.$router.push({
+        path: '/userInformation',
+        query: {
+          uid: this.uid
+        }
+      })
+    },
+    // 跳转修改密码页面
+    goUpdatePassword() {
+      this.$router.push({
+        path: '/updatePassword',
+        query: {
+          uid: this.uid
+        }
+      })
+    },
+    // 跳转修改信息页面
+    goUpdateInformation() {
+      this.$router.push({
+        path: '/updateInformation',
         query: {
           uid: this.uid
         }
