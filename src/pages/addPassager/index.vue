@@ -64,7 +64,8 @@ export default {
       birth: "",
       gender: "",
       genderList: [["男", "女"]],
-      showGender: false
+      showGender: false,
+      myArray: []
     };
   },
   components: {
@@ -78,42 +79,22 @@ export default {
     data = JSON.parse(data);
     this.data = data;
     let dataList = data.res;
+
+    // 确保 userInfo 和 pasgerList 都正确初始化
     this.userInfo = dataList[this.uid].info;
-    if (!this.userInfo.hasOwnProperty("pasgerList")) {
-      this.userInfo.pasgerList = [];
+    if (!this.userInfo) {
+      this.userInfo = {}; // 初始化 userInfo
     }
-    this.pasgerList = this.userInfo.pasgerList;
+
+    if (!this.userInfo.hasOwnProperty("pasgerList")) {
+      this.userInfo.pasgerList = []; // 确保 pasgerList 是一个数组
+    }
+
+    this.pasgerList = this.userInfo.pasgerList; // 赋值给 pasgerList
     console.log(this.userInfo);
   },
+
   methods: {
-    showDate() {
-      const _this = this;
-      this.$vux.datetime.show({
-        cancelText: "取消",
-        confirmText: "确认",
-        minYear: 1919,
-        maxYear: 2019,
-        value: "",
-        onConfirm() {
-          _this.birth = this.value;
-        }
-      });
-    },
-    getNameValues(value) {
-      this.gender = value[0];
-    },
-    // 身份证号
-    getIdNumber(value) {
-      this.idNumber = value;
-    },
-    // 姓名
-    getName(value) {
-      this.name = value;
-    },
-    // 手机号
-    getPhone(value) {
-      this.phone = value;
-    },
     saveInfo() {
       // 验证身份证号
       let regId = /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/;
@@ -128,7 +109,7 @@ export default {
         return false;
       }
       // 验证手机号
-      let regPhone = /^1[3|4|5|8][0-9]\d{4,8}$/;
+      let regPhone = /^\d{11}$/;
       if (!regPhone.test(this.phone)) {
         this.$toast.center("手机号填写有误");
         return false;
@@ -141,15 +122,22 @@ export default {
         gender: this.gender,
         phone: this.phone
       };
-      this.pasgerList.push(params);
-      this.data.res[this.uid].info.pasgerList = this.pasgerList;
-      let data = JSON.stringify(this.data);
-      localStorage.setItem('user-data', data);
 
-      this.$toast.center('保存成功');
-      this.$router.back(-1);
+      // 确保 pasgerList 是一个数组
+      if (!Array.isArray(this.pasgerList)) {
+        this.pasgerList = []; // 如果不确定，重新初始化
+      }
+
+      this.pasgerList.push(params); // 添加乘机人信息
+      this.data.res[this.uid].info.pasgerList = this.pasgerList; // 更新数据
+      let data = JSON.stringify(this.data);
+      localStorage.setItem('user-data', data); // 保存到 localStorage
+
+      this.$toast.center('保存成功'); // 显示保存成功的提示
+      this.$router.back(-1); // 返回上一页
     }
   }
+
 };
 </script>
 

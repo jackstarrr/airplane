@@ -69,7 +69,6 @@ export default {
       width: 30 * $px;
       height: 30 * $px;
     }
-  } 
+  }
 }
 </style>
-

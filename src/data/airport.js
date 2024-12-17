@@ -1257,7 +1257,7 @@ const domestic = [
     al: [{ n: '衢州机场', c: 'JUZ' }]
   },
   {
-    name: '黔江',
+    name: ' ',
     code: 'JIQ',
     timezone: '480',
     cname: '中国',

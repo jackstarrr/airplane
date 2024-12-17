@@ -101,7 +101,7 @@ import arrIcon from "@/assets/iconImages/arr.png";
 import calendarIcon from "@/assets/iconImages/calendar.png";
 
 // 组件
-import showCalendar from "@/components/showCalendar";
+import showCalendar from '@/components/showCalendar';
 export default {
   props: {
     tabs: {
