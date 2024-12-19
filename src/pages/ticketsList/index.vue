@@ -53,8 +53,8 @@ import axios from 'axios';
 export default {
   data() {
     return {
-      dep: "",
-      arr: "",
+      dep: "",      // 声明 dep
+      arr: "",      // 声明 arr
       headIcon: oneway_icon,
       timeIcon: timeArrow,
       depDate: "",
@@ -74,8 +74,11 @@ export default {
     let { dep, arr, depDate, arrDate, isRt, uid } = query;
     isRt = isRt == 0 ? true : false;
     this.uid = uid;
+
+    // 确保 dep 和 arr 被正确赋值
     this.dep = dep; // 将路由查询参数 dep 赋值给 dep
     this.arr = arr; // 将路由查询参数 arr 赋值给 arr
+
     if (isRt) {
       this.headIcon = return_icon;
     }
@@ -122,8 +125,7 @@ export default {
         console.error('查询机场失败:', error);
       }
     },
-
-// 查询匹配的机场名并根据city字段值查询航班数据
+    // 查询匹配的机场名并根据city字段值查询航班数据
     queryAirport() {
       for (let i = 0; i < this.depAirportData.length; i++) {
         for (let j = 0; j < this.arrAirportData.length; j++) {
@@ -136,7 +138,7 @@ export default {
       }
     },
 
-// 查询航班数据
+    // 查询航班数据
     async queryFlightData(depAirport, arrAirport) {
       try {
         const token = localStorage.getItem('token');
@@ -200,6 +202,8 @@ export default {
     }
   }
 };
+
+
 </script>
 
 
