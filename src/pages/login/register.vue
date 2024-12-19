@@ -30,25 +30,6 @@
           :verify-desc="'两次密码不一致'"
           @on-input="checkRepsd"
         ></input-item>
-        <input-item
-          :icon="emailIcon"
-          :placeholder="'请输入邮箱'"
-          :verify-desc="'请输入有效的邮箱地址'"
-          :show-verify-desc="showEmailVerify"
-          @on-input="checkEmail"
-        ></input-item>
-        <input-item
-          :icon="phoneIcon"
-          :placeholder="'请输入电话'"
-          :verify-desc="'请输入有效的电话号码'"
-          :show-verify-desc="showPhoneVerify"
-          @on-input="checkPhone"
-        ></input-item>
-        <input-item
-          :icon="addressIcon"
-          :placeholder="'请输入地址'"
-          @on-input="checkAddress"
-        ></input-item>
         <submit-btn
           :btn-text="'注册'"
           @to-submit="register"
@@ -60,46 +41,27 @@
 </template>
 
 <script>
-import axios from 'axios'; // 引入 axios
 import loginIcon from "@/assets/iconImages/login.png";
 import userIcon from "@/assets/iconImages/user.png";
 import passwordIcon from "@/assets/iconImages/password.png";
-import emailIcon from "@/assets/iconImages/password.png"; // 新增邮箱图标
-import phoneIcon from "@/assets/iconImages/password.png"; // 新增电话图标
-import addressIcon from "@/assets/iconImages/password.png"; // 新增地址图标
 import inputItem from "./components/inputItem";
 import submitBtn from "./components/submitButton";
-
 export default {
   data() {
     return {
       loginIcon: loginIcon,
       userIcon: userIcon,
       passwordIcon: passwordIcon,
-      emailIcon: emailIcon,
-      phoneIcon: phoneIcon,
-      addressIcon: addressIcon,
       showUserVerify: false,
       showPsdVerify: false,
-      showRepsdVerify: false,
-      showEmailVerify: false,
-      showPhoneVerify: false,
-      userName: '',
-      password: '',
-      email: '',
-      phone: '',
-      address: '',
-      isUserNameChecked: false,
-      isPsdChecked: false,
-      isRepsdChecked: false,
-      isEmailChecked: false,
-      isPhoneChecked: false,
+      showRepsdVerify: false
     };
   },
   created() {
     let users = localStorage.getItem('users');
-    users = JSON.parse(users) || {list: []};
+    users = JSON.parse(users) || { list: [] };
     this.userList = users.list || [];
+    // console.log(this.userList);
   },
   methods: {
     // 验证用户名
@@ -130,70 +92,47 @@ export default {
         this.isRepsdChecked = true;
       }
     },
-    // 验证邮箱
-    checkEmail(value) {
-      this.showEmailVerify = true;
-      let pattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-      if (pattern.test(value)) {
-        this.showEmailVerify = false;
-        this.isEmailChecked = true;
-        this.email = value;
-      }
-    },
-    // 验证电话
-    checkPhone(value) {
-      this.showPhoneVerify = true;
-      let pattern = /^\d{11}$/; // 假设电话为11位
-      if (pattern.test(value)) {
-        this.showPhoneVerify = false;
-        this.isPhoneChecked = true;
-        this.phone = value;
-      }
-    },
-    // 地址输入
-    checkAddress(value) {
-      this.address = value; // 地址不进行复杂验证
-    },
     // 注册
-    async register() {
-      if (
-        this.isUserNameChecked &&
-        this.isPsdChecked &&
-        this.isRepsdChecked &&
-        this.isEmailChecked &&
-        this.isPhoneChecked
-      ) {
-        // 构建用户信息
+    register() {
+      if (this.isUserNameChecked && this.isPsdChecked && this.isRepsdChecked) {
         let user = {
-          username: this.userName,
+          name: this.userName,
+          uid: this.userList.length,
           password: this.password,
-          email: this.email,
-          phone: this.phone,
-          address: this.address,
         };
+        this.userList.push(user);
+        let param = {
+          list: this.userList
+        };
+        param = JSON.stringify(param);
+        localStorage.setItem('users', param);
 
-        try {
-          // 发送注册请求
-          const response = await axios.post('http://localhost:8080/user/register', user);
-          // 如果响应成功，跳转到登录页面
-          this.$toast.bottom("注册成功");
-          this.$router.push({
-            path: "/login"
-          });
-        } catch (error) {
-          // 如果响应失败，显示错误信息
-          if (error.response && error.response.data && error.response.data.message) {
-            this.$toast.bottom(error.response.data.message); // 显示后端返回的错误信息
-          } else {
-            this.$toast.bottom("注册失败，请重试"); // 通用错误提示
+        let userData = localStorage.getItem('user-data');
+        userData = JSON.parse(userData) || { res: [] };
+        let userDataList = userData.res;
+        let this_user_data = {
+          uid: user.uid,
+          info: {
+            balance: 0
           }
+        };
+        userDataList.push(this_user_data);
+        let dataParam = {
+          res: userDataList
         }
+        dataParam = JSON.stringify(dataParam);
+        localStorage.setItem('user-data', dataParam);
+
+        this.$toast.bottom("注册成功");
+        this.$router.push({
+          path: "/login"
+        });
       }
     },
     toLogin() {
       this.$router.push({
-        path: "/login"
-      });
+          path: "/login"
+        });
     }
   },
   components: {
@@ -205,13 +144,11 @@ export default {
 
 <style lang="stylus" scoped>
 @import '../../stylus/common.styl';
-
 .register {
   height: 100vh;
   padding-top: 150 * $px;
   box-sizing: border-box;
   background-image: linear-gradient(to top, #fff1eb 0%, #ace0f9 100%);
-
   &-body {
     width: 340 * $px;
     padding-bottom: 20 * $px;
@@ -221,8 +158,7 @@ export default {
     margin: 0 auto;
     position: relative;
     padding-top: 45 * $px;
-    padding-bottom: 70 * $px;
-
+    padding-bottom 70 * $px;
     .user-icon {
       display: block;
       width: 60 * $px;
@@ -231,18 +167,15 @@ export default {
       top: -30 * $px;
       left: 140 * $px;
     }
-
     &-desc {
       color: #aaa;
       font-weight: 600;
       font-size: 24 * $px;
       letter-spacing: 1 * $px;
     }
-
     .register-form {
       margin-top: 24 * $px;
     }
-
     .extra {
       position: absolute;
       margin-top: 30 * $px;
@@ -253,3 +186,4 @@ export default {
   }
 }
 </style>
+

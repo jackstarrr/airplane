@@ -17,7 +17,7 @@
           :key="index"
           @click="pickCity(item, index)"
           :class="{ checked: itemIndex == index }"
-        >{{ item.name }}</span>
+        >{{ item }}</span>
       </div>
     </div>
     <div
@@ -30,7 +30,7 @@
           :key="index"
           @click="pickCity(item, index)"
           :class="{ checked: itemIndex == index }"
-        >{{ item.name }}</span>
+        >{{ item }}</span>
       </div>
     </div>
   </div>
