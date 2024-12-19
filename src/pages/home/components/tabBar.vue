@@ -19,7 +19,7 @@
           class="dep"
           :class="{placeholder: dep.name === ''}"
           @click="searchAirport('dep')"
-        >{{ dep.name || depPlaceholder }}</div>
+        >{{ dep || depPlaceholder }}</div>
       </div>
       <!-- 选择目的地 -->
       <div class="select-item fx-row fx-v-center">
@@ -28,7 +28,7 @@
           class="arr"
           :class="{placeholder: arr.name === ''}"
           @click="searchAirport('arr')"
-        >{{ arr.name || arrPlaceholder }}</div>
+        >{{ arr || arrPlaceholder }}</div>
       </div>
       <!-- 选择出发日期 -->
       <div class="select-item fx-row fx-v-center">
@@ -116,14 +116,8 @@ export default {
       depIcon: depIcon,
       arrIcon: arrIcon,
       calendarIcon: calendarIcon,
-      dep: {
-        name: "",
-        code: null
-      },
-      arr: {
-        name: "",
-        code: null
-      },
+      dep: "",
+      arr: "",
       depDate: "",
       arrDate: "",
       depPlaceholder: "请选择出发地",
@@ -132,6 +126,8 @@ export default {
       arrdatePlaceholder: "请选择返回日期",
       isReturn: false,
       canShowCalendar: false
+      // dep: localStorage.getItem('dep'),
+      // arr: localStorage.getItem('arr')
     };
   },
   created() {
@@ -196,6 +192,7 @@ export default {
     searchAirport(type) {
       type = type === "dep" ? 0 : 1;
       this.storeData();
+      console.log(type)
       this.$router.push({
         path: "/airport",
         query: { type, uid: this.uid }
