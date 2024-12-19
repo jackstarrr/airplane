@@ -2,9 +2,9 @@
   <div class="ticket-list">
     <div class="ticket-list-header">
       <div class="city-wrap fx-row fx-v-center fx-m-between">
-        <div class="dep">{{ dep.name }}</div>
+        <div class="dep">{{ dep }}</div>
         <img :src="headIcon" />
-        <div class="arr">{{ arr.name }}</div>
+        <div class="arr">{{ arr }}</div>
       </div>
       <div
         class="date-wrap"
@@ -45,24 +45,16 @@
 </template>
 
 <script>
-// 数据
-import airport from "@/data/airport.js";
-import ticketMock from "@/data/ticket.js";
-// 图片
 import oneway_icon from "@/assets/iconImages/oneway.png";
 import return_icon from "@/assets/iconImages/return.png";
 import timeArrow from "@/assets/iconImages/timeArrow.png";
+import axios from 'axios';
+
 export default {
   data() {
     return {
-      dep: {
-        name: "",
-        code: ""
-      },
-      arr: {
-        name: "",
-        code: ""
-      },
+      dep: "",
+      arr: "",
       headIcon: oneway_icon,
       timeIcon: timeArrow,
       depDate: "",
@@ -71,7 +63,10 @@ export default {
       depTimeList: [],
       arrTimeList: [],
       ticketList: [],
-      flightNo: '东航MU5183'
+      flightNo: '东航MU5183',
+      depAirportData: [], // 出发机场数据
+      arrAirportData: [], // 目的机场数据
+      flight: []
     };
   },
   created() {
@@ -79,149 +74,114 @@ export default {
     let { dep, arr, depDate, arrDate, isRt, uid } = query;
     isRt = isRt == 0 ? true : false;
     this.uid = uid;
+    this.dep = dep; // 将路由查询参数 dep 赋值给 dep
+    this.arr = arr; // 将路由查询参数 arr 赋值给 arr
     if (isRt) {
       this.headIcon = return_icon;
     }
     this.depDate = depDate;
     this.arrDate = arrDate;
-    this.queryCity(dep, 0);
-    this.queryCity(arr, 1);
+    this.queryCity(dep, 0); // 查询出发机场数据
+    this.queryCity(arr, 1); // 查询目的机场数据
     this.createList();
   },
   methods: {
-    // 查询出发地 目的地 详细信息
-    queryCity(city, type) {
-      let matchedArray = airport.domestic.filter(item => {
-        if (item.code == city) return item;
-      });
-      if (matchedArray.length == 0) {
-        matchedArray = airport.international.filter(item => {
-          if (item.code == city) return item;
+    // 查询出发地和目的地机场数据
+    async queryCity(city, type) {
+      try {
+        console.log("ybc", city, type);
+        const token = localStorage.getItem('token');
+        const response = await axios.post('/airport/search', {
+          city: city
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          withCredentials: true  // 确保带有凭证的请求（如 Cookies）发送
         });
-        this.isDomestic = false;
-      }
-      /**
-       * type = 0 =>出发地
-       * type = 1 => 目的地
-       */
-      if (type === 0) {
-        this.dep = matchedArray[0];
-      } else {
-        this.arr = matchedArray[0];
-      }
-      this.queryAirport(matchedArray, type);
-    },
-    // 查询匹配的机场名
-    queryAirport(arr, type) {
-      let airportArray = arr[0].al;
-      airportArray = airportArray.map(item => {
-        if (item.n.indexOf("国际机场") > 0) {
-          let airport = item.n.split("国际机场");
-          return airport[0];
-        } else {
-          let airport = item.n.split("机场");
-          return airport[0];
-        }
-      });
-      if (type === 0) {
-        this.depAirport = airportArray;
-      } else {
-        this.arrAirport = airportArray;
-      }
-    },
-    // 生成随机整数
-    randomNum(minNum, maxNum) {
-      switch (arguments.length) {
-        case 1:
-          return parseInt(Math.random() * minNum + 1, 10);
-          break;
-        case 2:
-          return parseInt(Math.random() * (maxNum - minNum + 1) + minNum, 10);
-          break;
-        default:
-          return 0;
-          break;
-      }
-    },
-    // 从大到小排序
-    sortNumber(a, b) {
-      return a - b;
-    },
-    // 生成随机数组
-    randomArray(min, max, num) {
-      let arr = [];
-      for (let i = 0; i < num; i++) {
-        let number = this.randomNum(min, max);
-        arr.push(number);
-      }
-      arr = arr.sort(this.sortNumber);
-      return arr;
-    },
-    // 生成航班列表
-    createTimeArr(type, times) {
-      let randomArr = this.randomArray(0, 9, 3);
-      let depDateArr = [
-        ticketMock.depDate1,
-        ticketMock.depDate2,
-        ticketMock.depDate3
-      ];
-      let arrDateArr = [
-        ticketMock.domesticArrDate1,
-        ticketMock.domesticArrDate2,
-        ticketMock.domesticArrDate3
-      ];
-      let interArrDateArr = [
-        ticketMock.interArrDate1,
-        ticketMock.interArrDate2,
-        ticketMock.interArrDate3
-      ];
+        if (response.data.code == 200) {
+          const airportData = response.data.data;
+          if (type === 0) {
+            // 出发机场数据
+            this.depAirportData = airportData;
+            console.log('depAirportData', this.depAirportData);
+          } else {
+            // 目的机场数据
+            this.arrAirportData = airportData;
+            console.log('arrAirportData', this.arrAirportData);
+          }
 
-      if (type === 0) {
-        randomArr.forEach(n => {
-          this.depTimeList.push(depDateArr[times][n]);
-          // console.log(this.depTimeList);
-        });
-      } else if (type === 1 && this.isDomestic) {
-        randomArr.forEach(n => {
-          this.arrTimeList.push(arrDateArr[times][n]);
-        });
-      } else {
-        randomArr.forEach(n => {
-          this.arrTimeList.push(interArrDateArr[times][n]);
-        });
+          // 在获取到数据后调用查询航班的函数
+          if (this.depAirportData.length > 0 && this.arrAirportData.length > 0) {
+            this.queryAirport();
+          }
+        } else {
+          this.$toast.center('获取机场失败');
+        }
+      } catch (error) {
+        console.error('查询机场失败:', error);
       }
     },
-    // 随机生成价格
-    createPrice() {
-      if (this.isDomestic) {
-        let number = this.randomNum(0, 18);
-        return ticketMock.domesticPrice[number];
-      } else {
-        let number = this.randomNum(0, 13);
-        return ticketMock.interPrice[number];
+
+// 查询匹配的机场名并根据city字段值查询航班数据
+    queryAirport() {
+      for (let i = 0; i < this.depAirportData.length; i++) {
+        for (let j = 0; j < this.arrAirportData.length; j++) {
+          const depAirport = this.depAirportData[i].airportName; // 获取出发机场的 airportName
+          const arrAirport = this.arrAirportData[j].airportName; // 获取目的机场的 airportName
+
+          // 调用 queryFlightData 方法，传入城市名称（airportName）
+          this.queryFlightData(depAirport, arrAirport);
+        }
       }
     },
-    //  生成航班列表
+
+// 查询航班数据
+    async queryFlightData(depAirport, arrAirport) {
+      try {
+        const token = localStorage.getItem('token');
+        console.log('depAirport', depAirport);
+        console.log('arrAirport', arrAirport);
+
+        const response = await axios.post('/flyplan/search', {
+          flightStartPlace: depAirport, // 使用机场名称作为参数
+          flightTargetPlace: arrAirport // 使用机场名称作为参数
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          withCredentials: true  // 确保带有凭证的请求（如 Cookies）发送
+        });
+
+        const flightData = response.data.data;
+
+        if (flightData && flightData.length > 0) {
+          // 使用 concat 合并数据到 ticketList，避免覆盖
+          this.ticketList = [...this.ticketList, ...flightData.map(item => ({
+            depTime: item.flightStartTime,
+            arrTime: item.flightTargetTime,
+            price: item.ecoPrice, // 假设我们取经济舱价格
+            depAirport: item.flightStartPlace,
+            arrAirport: item.flightTargetPlace
+          }))];
+
+          console.log('ticketList', this.ticketList);
+        } else {
+          console.log('未找到航班数据');
+        }
+      } catch (error) {
+        console.error('查询航班失败:', error);
+      }
+    },
+
+    // 生成航班列表 (可根据需求修改逻辑)
     createList() {
-      this.createTimeArr(0, 0);
-      this.createTimeArr(0, 1);
-      this.createTimeArr(0, 2);
-      this.createTimeArr(1, 0);
-      this.createTimeArr(1, 1);
-      this.createTimeArr(1, 2);
-      for (let i = 0; i < 9; i++) {
-        let price = this.createPrice();
-        let depAirport = this.depAirport[this.randomNum(0, this.depAirport.length - 1)];
-        let arrAirport = this.arrAirport[this.randomNum(0, this.arrAirport.length - 1)];
-        this.ticketList[i] = {
-          depTime: this.depTimeList[i],
-          arrTime: this.arrTimeList[i],
-          price: price,
-          depAirport,
-          arrAirport
-        };
+      if (this.dep && this.arr) {
+        // 如果有出发地和目的地数据，则不再使用本地生成数据，改为通过接口查询航班
+        this.queryFlightData(this.dep.airportName, this.arr.airportName);
       }
     },
+
     goBook(item) {
       this.$router.push({
         path: '/book',
@@ -236,11 +196,12 @@ export default {
           flightNo: this.flightNo,
           from: 'ticketList'
         }
-      })
+      });
     }
   }
 };
 </script>
+
 
 <style lang="stylus" scoped>
 @import '../../stylus/common.styl';
