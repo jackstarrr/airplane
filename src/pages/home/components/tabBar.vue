@@ -201,13 +201,13 @@ export default {
     // 出发目的地判断
     checkAirport() {
       this.checkedAirport = true;
-      if (!this.dep.name) {
+      if (!this.dep) {
         this.$toast.center("请选择出发机场!");
         this.checkedAirport = false;
-      } else if (!this.arr.name) {
+      } else if (!this.arr) {
         this.$toast.center("请选择目的机场!");
         this.checkedAirport = false;
-      } else if (this.dep.code == this.arr.code) {
+      } else if (this.dep == this.arr) {
         this.$toast.center("出发地与目的地不能相同!");
         this.checkedAirport = false;
       }

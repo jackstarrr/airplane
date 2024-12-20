@@ -6,7 +6,7 @@
     </div>
     <div class="passager-body">
       <passager-list :pasger-list="passagerList"
-      @pick-item="pickItem"></passager-list>
+                     @pick-item="pickItem"></passager-list>
     </div>
   </div>
 </template>
