@@ -45,6 +45,8 @@ export default {
   data() {
     return {
       ticketCard: {
+        dep:"",
+        arr:"",
         depCity: "",
         arrCity: "",
         depAirport: "",
@@ -58,6 +60,8 @@ export default {
         flightNo: ""
       },
       price: null,
+      headPrice: null,
+      ecoPrice: null,
       timeMock: [
         [
           "08:10-10:25",
@@ -89,20 +93,28 @@ export default {
       dep,
       arr,
       depDate,
-      price,
+      ecoPrice,
+      headPrice,
       week,
       flightNo,
       depTime,
       arrTime,
+      depAirport,
+      arrAirport,
       type,
       from
     } = query;
     this.uid = uid;
     this.ticketCard.flightWeek = week;
     this.ticketCard.flightNo = flightNo;
-    this.price = price;
-    this.findCity(dep, 0);
-    this.findCity(arr, 1);
+    this.ecoPrice = ecoPrice;
+    this.headPrice = headPrice;
+    this.ticketCard.depCity = dep;
+    this.ticketCard.arrCity = arr;
+    this.ticketCard.depAirport = depAirport;
+    this.ticketCard.arrAirport = arrAirport;
+    // this.findCity(dep, 0);
+    // this.findCity(arr, 1);
     if (from == "recomd") {
       this.formatDate(depDate);
       let random = this.randomNum(0, 4);
