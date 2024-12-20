@@ -58,6 +58,8 @@
 <script>
 import inputItem from "./components/inputItem";
 import { PopupPicker } from "vux";
+import axios from "axios"; // 引入 axios 库
+
 export default {
   data() {
     return {
@@ -65,7 +67,10 @@ export default {
       gender: "",
       genderList: [["男", "女"]],
       showGender: false,
-      myArray: []
+      idNumber: "", // 身份证号
+      name: "", // 乘机人姓名
+      phone: "", // 手机号
+      passengerId: "" // 提供的乘机人ID（可选）
     };
   },
   components: {
@@ -75,9 +80,11 @@ export default {
   created() {
     let query = this.$route.query;
     this.uid = query.uid;
+
     let data = localStorage.getItem("user-data");
     data = JSON.parse(data);
     this.data = data;
+
     let dataList = data.res;
 
     // 确保 userInfo 和 pasgerList 都正确初始化
@@ -89,53 +96,104 @@ export default {
     if (!this.userInfo.hasOwnProperty("pasgerList")) {
       this.userInfo.pasgerList = []; // 确保 pasgerList 是一个数组
     }
-
-    this.pasgerList = this.userInfo.pasgerList; // 赋值给 pasgerList
-    console.log(this.userInfo);
+    this.pasgerList = this.userInfo.pasgerList;
   },
 
   methods: {
-    saveInfo() {
+    showDate() {
+      const _this = this;
+      this.$vux.datetime.show({
+        cancelText: "取消",
+        confirmText: "确认",
+        minYear: 1919,
+        maxYear: 2019,
+        value: "",
+        onConfirm() {
+          _this.birth = this.value;
+        }
+      });
+    },
+    getNameValues(value) {
+      this.gender = value[0];
+    },
+    getIdNumber(value) {
+      this.idNumber = value;
+    },
+    getName(value) {
+      this.name = value;
+    },
+    getPhone(value) {
+      this.phone = value;
+    },
+    async saveInfo() {
       // 验证身份证号
       let regId = /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/;
       if (!regId.test(this.idNumber)) {
         this.$toast.center("身份证号填写有误");
-        return false;
+        return;
       }
       // 验证姓名
       let regName = /^[\u4e00-\u9fa5]{2,4}$/;
       if (!regName.test(this.name)) {
         this.$toast.center("姓名填写有误");
-        return false;
+        return;
       }
       // 验证手机号
-      let regPhone = /^\d{11}$/;
+      let regPhone = /^1[3-9][0-9]{9}$/;
       if (!regPhone.test(this.phone)) {
         this.$toast.center("手机号填写有误");
-        return false;
+        return;
       }
 
-      let params = {
-        idNo: this.idNumber,
-        name: this.name,
-        birth: this.birth,
-        gender: this.gender,
-        phone: this.phone
-      };
+      try {
+        // 检查是否存在 token
+        const token = localStorage.getItem("token");
+        if (!token) {
+          this.$toast.center("未登录或登录信息已过期，请重新登录");
+          this.$router.replace("/login");
+          return;
+        }
 
-      // 确保 pasgerList 是一个数组
-      if (!Array.isArray(this.pasgerList)) {
-        this.pasgerList = []; // 如果不确定，重新初始化
+        // 调用后端接口传输数据
+        const passengerData = {
+          passengerId: this.idNumber,
+          passengerName: this.name,
+          phone: this.phone
+        };
+        console.log("正在发送请求数据:", passengerData);
+
+        const response = await axios.post(
+          "/user/addpassenger",
+          passengerData,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            withCredentials: true
+          }
+        );
+
+        console.log("接口返回数据:", response.data);
+
+        // 处理返回结果
+        if (response && response.data && response.data.code === 200) {
+          this.pasgerList.push(passengerData);
+          this.data.res[this.uid].info.pasgerList = this.pasgerList;
+
+          // 更新 localStorage 数据
+          localStorage.setItem("user-data", JSON.stringify(this.data));
+
+          this.$toast.center("保存成功");
+          this.$router.go(-1); // 返回上一页面
+        } else {
+          this.$toast.center("添加失败: " + (response.data.message || "未知错误"));
+          console.error("接口返回错误:", response.data);
+        }
+      } catch (error) {
+        console.error("请求失败:", error.message || error);
+        this.$toast.center("请求失败，请稍后再试");
       }
-
-      this.pasgerList.push(params); // 添加乘机人信息
-      this.data.res[this.uid].info.pasgerList = this.pasgerList; // 更新数据
-      let data = JSON.stringify(this.data);
-      localStorage.setItem('user-data', data); // 保存到 localStorage
-
-      this.$toast.center('保存成功'); // 显示保存成功的提示
-      this.$router.back(-1); // 返回上一页
     }
+
+
   }
 
 };
@@ -143,24 +201,30 @@ export default {
 
 <style lang="stylus" scoped>
 @import '../../stylus/common.styl';
+
 .add-pasger {
   padding-top: 20 * $px;
+
   &-header {
     text-align: start;
+
     &-title {
       margin-left: 15 * $px;
       font-size: 26 * $px;
       font-weight: 600;
       letter-spacing: 2 * $px;
     }
+
     &-desc {
       margin-left: 20 * $px;
       margin-top: 7 * $px;
     }
   }
+
   &-body {
     padding: 20 * $px 17 * $px;
   }
+
   &-footer {
     position: fixed;
     bottom: 0;
@@ -169,6 +233,7 @@ export default {
     padding: 25 * $px 15 * $px 15 * $px 20 * $px;
     border-top: 1px solid #eee;
     box-shadow: 0 0 6 * $px #ccc;
+
     &-btn {
       padding: 10 * $px;
       text-align: center;
@@ -180,6 +245,3 @@ export default {
   }
 }
 </style>
-
-
-
