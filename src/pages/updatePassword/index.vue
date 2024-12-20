@@ -100,7 +100,7 @@ export default {
 }
 
 .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 30px;
 }
 
 .form-group label {
@@ -119,7 +119,7 @@ export default {
 button {
   width: 100%;
   padding: 10px;
-  background-color: #4CAF50;
+  background-color: #1188ff;
   color: white;
   border: none;
   border-radius: 5px;
