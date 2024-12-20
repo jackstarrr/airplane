@@ -86,12 +86,19 @@ export default {
     this.data = data;
 
     let dataList = data.res;
+
+    // 确保 userInfo 和 pasgerList 都正确初始化
     this.userInfo = dataList[this.uid].info;
+    if (!this.userInfo) {
+      this.userInfo = {}; // 初始化 userInfo
+    }
+
     if (!this.userInfo.hasOwnProperty("pasgerList")) {
-      this.userInfo.pasgerList = [];
+      this.userInfo.pasgerList = []; // 确保 pasgerList 是一个数组
     }
     this.pasgerList = this.userInfo.pasgerList;
   },
+
   methods: {
     showDate() {
       const _this = this;

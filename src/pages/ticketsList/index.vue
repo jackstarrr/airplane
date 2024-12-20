@@ -36,7 +36,7 @@
               <div class="airport-arr">{{ item.arrAirport }}</div>
             </div>
           </div>
-          <div class="ticket-price">￥{{ item.price }}</div>
+          <div class="ticket-price">￥{{ item.ecoPrice }}</div>
         </div>
         <div class="ticket-card-footer">{{ flightNo }}</div>
       </div>
@@ -53,8 +53,8 @@ import axios from 'axios';
 export default {
   data() {
     return {
-      dep: "",
-      arr: "",
+      dep: "",      // 声明 dep
+      arr: "",      // 声明 arr
       headIcon: oneway_icon,
       timeIcon: timeArrow,
       depDate: "",
@@ -74,8 +74,11 @@ export default {
     let { dep, arr, depDate, arrDate, isRt, uid } = query;
     isRt = isRt == 0 ? true : false;
     this.uid = uid;
+
+    // 确保 dep 和 arr 被正确赋值
     this.dep = dep; // 将路由查询参数 dep 赋值给 dep
     this.arr = arr; // 将路由查询参数 arr 赋值给 arr
+
     if (isRt) {
       this.headIcon = return_icon;
     }
@@ -122,8 +125,7 @@ export default {
         console.error('查询机场失败:', error);
       }
     },
-
-// 查询匹配的机场名并根据city字段值查询航班数据
+    // 查询匹配的机场名并根据city字段值查询航班数据
     queryAirport() {
       for (let i = 0; i < this.depAirportData.length; i++) {
         for (let j = 0; j < this.arrAirportData.length; j++) {
@@ -136,31 +138,38 @@ export default {
       }
     },
 
-// 查询航班数据
+    // 查询航班数据
     async queryFlightData(depAirport, arrAirport) {
       try {
         const token = localStorage.getItem('token');
         console.log('depAirport', depAirport);
         console.log('arrAirport', arrAirport);
 
+        // 解析 depDate（格式为 "month月day日"）为数组 [year, month, day]
+        const year = new Date().getFullYear(); // 获取当前年份
+        const month = parseInt(this.depDate.split('月')[0], 10); // 获取月份
+        const day = parseInt(this.depDate.split('月')[1].split('日')[0], 10); // 获取日期
+
+        const date = [year, month, day]; // 将日期转化为 [year, month, day] 格式
         const response = await axios.post('/flyplan/search', {
           flightStartPlace: depAirport, // 使用机场名称作为参数
-          flightTargetPlace: arrAirport // 使用机场名称作为参数
+          flightTargetPlace: arrAirport, // 使用机场名称作为参数
+          date: date // 添加 date 数值
         }, {
           headers: {
             'Authorization': `Bearer ${token}`
           },
           withCredentials: true  // 确保带有凭证的请求（如 Cookies）发送
         });
-
         const flightData = response.data.data;
-
+        console.log('flightData', flightData);
         if (flightData && flightData.length > 0) {
           // 使用 concat 合并数据到 ticketList，避免覆盖
           this.ticketList = [...this.ticketList, ...flightData.map(item => ({
             depTime: item.flightStartTime,
             arrTime: item.flightTargetTime,
-            price: item.ecoPrice, // 假设我们取经济舱价格
+            ecoPrice: item.ecoPrice, // 假设我们取经济舱价
+            headPrice: item.headPrice,
             depAirport: item.flightStartPlace,
             arrAirport: item.flightTargetPlace
           }))];
@@ -178,6 +187,7 @@ export default {
     createList() {
       if (this.dep && this.arr) {
         // 如果有出发地和目的地数据，则不再使用本地生成数据，改为通过接口查询航班
+
       }
     },
 
@@ -186,19 +196,24 @@ export default {
         path: '/book',
         query: {
           uid: this.uid,
-          dep: this.dep.code,
-          arr: this.arr.code,
+          dep: this.dep,
+          arr: this.arr,
           depTime: item.depTime,
           arrTime: item.arrTime,
-          price: item.price,
+          ecoPrice: item.ecoPrice,
+          headPrice: item.headPrice,
           depDate: this.depDate,
           flightNo: this.flightNo,
+          depAirport: item.depAirport,
+          arrAirport: item.arrAirport,
           from: 'ticketList'
         }
       });
     }
   }
 };
+
+
 </script>
 
 

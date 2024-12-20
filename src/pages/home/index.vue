@@ -52,12 +52,12 @@
 
 <script>
 // 图片
-import saleBanner from "./images/banner1.png";
-import domesticBanner from "./images/domestic.jpg";
-import interBanner from "./images/inter.jpg";
+import saleBanner from './images/banner1.png';
+import domesticBanner from './images/domestic.jpg';
+import interBanner from './images/inter.jpg';
 
 // 组件
-import tabBar from "./components/tabBar";
+import tabBar from './components/tabBar';
 import { Swiper, Slide } from "vue-swiper-component";
 
 export default {

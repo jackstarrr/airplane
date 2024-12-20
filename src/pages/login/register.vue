@@ -98,7 +98,7 @@ export default {
   },
   created() {
     let users = localStorage.getItem('users');
-    users = JSON.parse(users) || {list: []};
+    users = JSON.parse(users) || { list: [] };
     this.userList = users.list || [];
   },
   methods: {
@@ -205,13 +205,11 @@ export default {
 
 <style lang="stylus" scoped>
 @import '../../stylus/common.styl';
-
 .register {
   height: 100vh;
   padding-top: 150 * $px;
   box-sizing: border-box;
   background-image: linear-gradient(to top, #fff1eb 0%, #ace0f9 100%);
-
   &-body {
     width: 340 * $px;
     padding-bottom: 20 * $px;
@@ -222,7 +220,6 @@ export default {
     position: relative;
     padding-top: 45 * $px;
     padding-bottom: 70 * $px;
-
     .user-icon {
       display: block;
       width: 60 * $px;
@@ -231,18 +228,15 @@ export default {
       top: -30 * $px;
       left: 140 * $px;
     }
-
     &-desc {
       color: #aaa;
       font-weight: 600;
       font-size: 24 * $px;
       letter-spacing: 1 * $px;
     }
-
     .register-form {
       margin-top: 24 * $px;
     }
-
     .extra {
       position: absolute;
       margin-top: 30 * $px;
