@@ -1,16 +1,10 @@
 <template>
   <div class="recommend">
-    <div class="recommend-title">特价机票</div>
+    <div class="recommend-title">推荐航班</div>
     <div class="recommend-body">
       <list-card
-        :title="'国内特价'"
-        :card-list="domesticList"
-        @to-book="toBook"
-      ></list-card>
-      <div id="inter"></div>
-      <list-card
-        :title="'国际特价'"
-        :card-list="interList"
+        :title="'推荐航班'"
+        :card-list="flightList"
         @to-book="toBook"
       ></list-card>
     </div>
@@ -18,92 +12,91 @@
 </template>
 
 <script>
+import axios from "axios";
 import listCard from "./components/listCard.vue";
-import saleList from "@/data/sale.js";
-import allAirport from "@/data/airport.js";
+
 export default {
   data() {
     return {
-      domesticList: [],
-      interList: []
+      flightList: [], // 存储推荐航班信息
     };
   },
   created() {
-    let query = this.$route.query;
-    this.uid = query.uid;
-    this.filtDomestic();
-    this.filtInter();
+    this.fetchRecommendedFlights(); // 获取推荐航班数据
   },
   methods: {
-    filtDomestic() {
-      let allDomestic = allAirport.domestic;
-      let allSales = saleList.sales;
-      let domesticSales = allSales.filter(item => {
-        for (let i = 0; i < allDomestic.length; i++) {
-          if (item.depCity == allDomestic[i].name) {
-            for (let j = 0; j < allDomestic.length; j++) {
-              if (item.arrCity == allDomestic[j].name) {
-                item.type = 0;
-                return item;
-              }
-            }
-          }
+    async fetchRecommendedFlights() {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          this.$toast.center("未登录或登录信息已过期，请重新登录");
+          this.$router.replace("/login");
+          return;
         }
-      });
-      this.domesticList = domesticSales;
-    },
-    filtInter() {
-      let allInter = allAirport.international;
-      let allSales = saleList.sales;
-      let interSales = allSales.filter(item => {
-        for (let i = 0; i < allInter.length; i++) {
-          if (
-            item.depCity == allInter[i].name ||
-            item.arrCity == allInter[i].name
-          ) {
-            item.type = 1;
-            return item;
-          }
+
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        const requestData = {
+          date: [
+            tomorrow.getFullYear(),
+            tomorrow.getMonth() + 1,
+            tomorrow.getDate(),
+          ],
+        };
+
+        const response = await axios.post("/flyplan/search", requestData, {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        });
+
+        if (response && response.data && response.data.code === 200) {
+          this.flightList = response.data.data.slice(0, 8).map((flight) => {
+            const flightDate = new Date(flight.flightDate || Date.now());
+            const daysOfWeek = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+            return {
+              planId: flight.planId,
+              logoSrc: flight.logoSrc,
+              airlineName: flight.airlineName,
+              flightStartPlace: flight.flightStartPlace,
+              flightTargetPlace: flight.flightTargetPlace,
+              ecoPrice: flight.ecoPrice || "暂无报价",
+              headPrice: flight.headPrice || "暂无报价",
+              flightDateFormatted: `${flightDate.getFullYear()}-${(
+                "0" + (flightDate.getMonth() + 1)
+              ).slice(-2)}-${("0" + flightDate.getDate()).slice(-2)}`,
+              dayOfWeek: daysOfWeek[flightDate.getDay()],
+            };
+          });
+        } else {
+          this.$toast.center(
+            "未能获取推荐航班: " + (response.data.message || "未知错误")
+          );
         }
-      });
-      this.interList = interSales;
-    },
-    getCode(item) {
-      let airList = allAirport.domestic.concat(allAirport.international);
-      for (let i = 0; i < airList.length; i++) {
-        if (item.depCity == airList[i].name) {
-          item.depCode = airList[i].code;
-        } else if (item.arrCity == airList[i].name) {
-          item.arrCode = airList[i].code;
-        }
+      } catch (error) {
+        console.error("请求推荐航班失败:", error.message || error);
+        this.$toast.center("请求失败，请稍后再试");
       }
     },
     toBook(item) {
-      this.getCode(item);
       this.$router.push({
         path: "/book",
         query: {
-          uid: this.uid,
-          type: item.type,
-          dep: item.depCode,
-          arr: item.arrCode,
-          depDate: item.date,
-          price: item.price,
-          week: item.week,
-          flightNo: item.flightNo,
-          from: "recomd"
-        }
+          planId: item.planId,
+          from: "recommend",
+        },
       });
-    }
+    },
   },
   components: {
-    listCard
-  }
+    listCard,
+  },
 };
 </script>
 
 <style lang="stylus" scoped>
 @import '../../stylus/common.styl';
+
 .recommend {
   padding: 10 * $px 16 * $px 20 * $px 16 * $px;
   background-image: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
@@ -118,5 +111,3 @@ export default {
   }
 }
 </style>
-
-
