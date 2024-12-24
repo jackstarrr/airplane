@@ -1,7 +1,7 @@
 <template>
   <div class="price-bar fx-v-center fx-m-between">
     <div class="price-wrap">
-      <div class="price">￥{{ price }}</div>
+      <div class="price">￥{{ price }}</div> <!-- 显示最新的价格 -->
       <div class="desc">订单总额</div>
     </div>
     <div class="pay-btn" @click="$emit('to-pay')">确认预订</div>
@@ -11,7 +11,7 @@
 <script>
 export default {
   props: {
-    price: {
+    price: {  // price 属性类型，确保正确传递
       type: [String, Number],
       default: ""
     }

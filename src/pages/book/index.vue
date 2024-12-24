@@ -1,5 +1,6 @@
 <template>
   <div class="book">
+    <!-- Ticket Information Display -->
     <ticket-card
       :flight-date="ticketCard.flightDate"
       :flight-week="ticketCard.flightWeek"
@@ -13,16 +14,30 @@
       :dep-date="ticketCard.depDate"
       :arr-date="ticketCard.arrDate"
     ></ticket-card>
+
+    <!-- Cabin Type Selection -->
+    <div class="cabin-select">
+      <label for="cabinType">选择舱位：</label>
+      <select id="cabinType" v-model="cabinType" @change="updatePrice">
+        <option value="0">经济舱</option>
+        <option value="1">头等舱</option>
+      </select>
+    </div>
+
+    <!-- Customer Information -->
     <customer-desc
       @to-page="selectPassager"
       :block-desc="pasger.name"
       :id-no="pasger.idNo"
     ></customer-desc>
-    <!-- <insurance-card></insurance-card> -->
+
+    <!-- Price Bar Display -->
     <price-bar
       :price="price"
       @to-pay="payMethods"
     ></price-bar>
+
+    <!-- Payment Methods Modal -->
     <pay-methods
       v-if="showPayMethods"
       @cancel="showPayMethods = false"
@@ -36,17 +51,14 @@
 import ticketCard from "./components/ticketCard";
 import customerDesc from "./components/customerDesc";
 import priceBar from "./components/priceBar";
-// import insuranceCard from "./components/insuranceCard";
 import payMethods from "./components/payMethods";
-import airport from "@/data/airport.js";
-import saleList from "@/data/sale.js";
-import { dateFormat } from "vux";
+import axios from "axios";
+import { dateFormat } from "vux"; // Assuming you may need this for date formatting
+
 export default {
   data() {
     return {
       ticketCard: {
-        dep:"",
-        arr:"",
         depCity: "",
         arrCity: "",
         depAirport: "",
@@ -57,38 +69,26 @@ export default {
         depTime: "",
         arrDate: "",
         arrTime: "",
-        flightNo: ""
+        flightNo: "",
+        planId: ""
       },
-      price: null,
-      headPrice: null,
-      ecoPrice: null,
-      timeMock: [
-        [
-          "08:10-10:25",
-          "09:25-14:00",
-          "12:05-15:45",
-          "13:15-16:20",
-          "16:00-19:25"
-        ],
-        [
-          "08:15-14:00",
-          "09:30-16:20",
-          "12:00-19:25",
-          "13:10-20:30",
-          "14:45-21:00"
-        ]
-      ],
+      cabinType: 0, // Default to economy class (0 for economy, 1 for first class)
+      price: 0,
+      headPrice: 0,
+      ecoPrice: 0,
       showPayMethods: false,
       balance: 0,
       pasger: {
         name: "乘机人",
-        idNo: ""
-      }
+        idNo: "",
+        phone: ""
+      },
+      userInfo: null
     };
   },
   created() {
-    let query = this.$route.query;
-    let {
+    const query = this.$route.query;
+    const {
       uid,
       dep,
       arr,
@@ -101,9 +101,10 @@ export default {
       arrTime,
       depAirport,
       arrAirport,
-      type,
-      from
+      planId
     } = query;
+
+    // Set ticket data
     this.uid = uid;
     this.ticketCard.flightWeek = week;
     this.ticketCard.flightNo = flightNo;
@@ -113,86 +114,58 @@ export default {
     this.ticketCard.arrCity = arr;
     this.ticketCard.depAirport = depAirport;
     this.ticketCard.arrAirport = arrAirport;
-    // this.findCity(dep, 0);
-    // this.findCity(arr, 1);
-    if (from == "recomd") {
-      this.formatDate(depDate);
-      let random = this.randomNum(0, 4);
-      let timeLine = this.timeMock[type][random].split("-");
-      this.ticketCard.depTime = timeLine[0];
-      this.ticketCard.arrTime = timeLine[1];
-    } else {
-      this.ticketCard.flightDate = depDate;
-      this.ticketCard.depDate = depDate;
-      this.ticketCard.arrDate = depDate;
-      this.ticketCard.depTime = depTime;
-      this.ticketCard.arrTime = arrTime;
-    }
+    this.ticketCard.flightDate = depDate;
+    this.ticketCard.depDate = depDate;
+    this.ticketCard.arrDate = depDate;
+    this.ticketCard.depTime = depTime;
+    this.ticketCard.arrTime = arrTime;
+    this.planId = planId; // Store plan ID
+    this.price = this.ecoPrice; // Set default price to economy price
 
-    let pasger = localStorage.getItem("add-pasger") || "";
-    localStorage.removeItem("add-pasger");
+    // Load passenger info from localStorage if available
+    const pasger = localStorage.getItem("add-pasger");
     if (pasger) {
       this.pasger = JSON.parse(pasger);
+      localStorage.removeItem("add-pasger");
     }
 
-    let data = localStorage.getItem("user-data");
-    data = JSON.parse(data);
-    this.data = data;
-    let dataList = data.res;
-    this.userInfo = dataList[this.uid].info;
-    this.balance = this.userInfo.balance;
-    if (!this.userInfo.hasOwnProperty("orderList")) {
-      this.userInfo.orderList = [];
+    // Load user info from localStorage
+    const data = localStorage.getItem("user-data");
+    if (!data) {
+      this.$toast.center("未找到用户信息，请重新登录！");
+      this.$router.push("/login");
+      return;
     }
-    this.orderList = this.userInfo.orderList;
+
+    const userInfo = JSON.parse(localStorage.getItem("user-info"));
+    if (!userInfo) {
+      this.$toast.center("未找到用户信息，请重新登录");
+      this.$router.push("/login");
+      return;
+    }
+
+    this.userInfo = userInfo; // Store user info
+    this.balance = this.userInfo.balance; // Sync balance
   },
   methods: {
-    findCity(code, type) {
-      let allAirport = airport.domestic.concat(airport.international);
-      for (let i = 0; i < allAirport.length; i++) {
-        if (allAirport[i].code == code) {
-          // 出发信息
-          if (type == 0) {
-            this.ticketCard.depCity = allAirport[i].name;
-            this.ticketCard.depAirport = allAirport[i].al[0].n;
-          } else if (type == 1) {
-            this.ticketCard.arrCity = allAirport[i].name;
-            this.ticketCard.arrAirport = allAirport[i].al[0].n;
-          }
-        }
+    // Update price when cabin type is changed
+    updatePrice() {
+      if (this.cabinType == 0) {
+        this.price = this.ecoPrice;  // Economy class
+      } else if (this.cabinType == 1) {
+        this.price = this.headPrice; // First class
       }
     },
-    formatDate(date) {
-      let dateArr = date.split("-");
-      let dateStr = dateArr[0] + "月" + dateArr[1] + "日";
-      this.ticketCard.flightDate = dateStr;
-      this.ticketCard.depDate = dateStr;
-      this.ticketCard.arrDate = dateStr;
-    },
-    // 生成随机整数
-    randomNum(minNum, maxNum) {
-      switch (arguments.length) {
-        case 1:
-          return parseInt(Math.random() * minNum + 1, 10);
-          break;
-        case 2:
-          return parseInt(Math.random() * (maxNum - minNum + 1) + minNum, 10);
-          break;
-        default:
-          return 0;
-          break;
-      }
-    },
-    // 选择乘机人
+
+    // Navigate to passenger selection page
     selectPassager() {
       this.$router.push({
         path: "/passager",
-        query: {
-          uid: this.uid
-        }
+        query: { uid: this.uid }
       });
     },
-    // 唤起支付方式
+
+    // Show payment methods if passenger is selected
     payMethods() {
       if (this.pasger.idNo == "") {
         this.$toast.center("请先选择乘机人！");
@@ -200,41 +173,62 @@ export default {
       }
       this.showPayMethods = true;
     },
-    // 生成订单号
-    createOrderId() {
-      let orderId = ""; //订单号
-      //6位随机数，用以加在时间戳后面。
-      for (let i = 0; i < 6; i++) {
-        orderId += Math.floor(Math.random() * 10);
+
+    // Handle payment processing
+    async topPaySuccessPage() {
+      if (!this.userInfo) {
+        this.$toast.center("未找到用户信息，请重新登录！");
+        return;
       }
-      orderId = new Date().getTime() + orderId;
-      return orderId;
-    },
-    // 支付成功页
-    topPaySuccessPage() {
+
+      // Check if the balance is sufficient
       if (this.balance < this.price) {
         this.$toast.center("余额不足，请先充值！");
-      } else {
-        this.data.res[this.uid].info.balance =
-          parseInt(this.balance) - parseInt(this.price);
-          let orderId = this.createOrderId();
-        let order = {
-          ticketCard: this.ticketCard,
-          passager: this.pasger,
-          price: this.price,
-          time: dateFormat(new Date(), "YYYY-MM-DD HH:mm"),
-          orderId: orderId
-        };
-        this.orderList.push(order);
-        this.data.res[this.uid].info.orderList = this.orderList;
-        let data = JSON.stringify(this.data);
-        localStorage.setItem("user-data", data);
-        this.$router.push({
-          path: "/paySuccess",
-          query: {
-            uid: this.uid
+        return;
+      }
+
+      const orderPayload = {
+        planId: this.planId,
+        cabinType: this.cabinType,
+        passengers: [
+          {
+            passengerName: this.pasger.name,
+            idType: 0,
+            idNumber: this.pasger.idNo,
+            phone: this.pasger.phone
+          }
+        ]
+      };
+
+      try {
+        // Call API to create order
+        const response = await axios.post("/order/create", orderPayload, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem("token")}`,
           }
         });
+
+        if (response.data.code === 200) {
+          this.$toast.center("预定成功！");
+
+          // Deduct balance after successful booking
+          this.userInfo.balance -= this.price;  // Deduct the balance
+          localStorage.setItem("user-info", JSON.stringify(this.userInfo));  // Save updated info
+
+          // Update balance variable
+          this.balance = this.userInfo.balance;
+
+          // Navigate to payment success page
+          this.$router.push({
+            path: "/paySuccess",
+            query: { uid: this.uid }
+          });
+        } else {
+          this.$toast.center("预定失败，请稍后再试！");
+        }
+      } catch (error) {
+        console.error("订单创建失败:", error);
+        this.$toast.center("预定失败，请稍后再试！");
       }
     }
   },
@@ -243,7 +237,6 @@ export default {
     customerDesc,
     priceBar,
     payMethods
-    // insuranceCard
   }
 };
 </script>
@@ -253,6 +246,13 @@ export default {
 .book {
   padding-top: 16 * $px;
 }
+
+.cabin-select {
+  margin: 16px 0;
+}
+
+select {
+  padding: 8px;
+  font-size: 14px;
+}
 </style>
-
-

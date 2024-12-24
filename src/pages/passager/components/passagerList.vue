@@ -17,9 +17,6 @@
 
 <script>
 export default {
-  data() {
-    return {};
-  },
   props: {
     pasgerList: {
       type: Array,
@@ -31,6 +28,7 @@ export default {
 
 <style lang="stylus" scoped>
 @import '../../../stylus/common.styl';
+
 .list {
   padding: 30 * $px 15 * $px;
   .item {
