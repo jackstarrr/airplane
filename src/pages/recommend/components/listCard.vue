@@ -9,21 +9,24 @@
       >
         <div class="card-list-item-desc">
           <div class="city-group fx-row fx-v-center">
-            <div class="dep">{{ item.depCity }}</div>
+            <div class="dep">{{ item.flightStartPlace }}</div>
             <img :src="arrowIcon" />
-            <div class="arr">{{ item.arrCity }}</div>
+            <div class="arr">{{ item.flightTargetPlace }}</div>
           </div>
           <div class="time-group fx-row fx-v-center">
             <img :src="calendar" />
-            <div class="date">{{ item.date }}</div>
-            <div class="week">{{ item.week}}</div>
+            <div class="date">{{ item.flightDateFormatted }}</div>
+            <div class="week">{{ item.dayOfWeek }}</div>
           </div>
         </div>
         <div
           class="card-list-item-buy-desc"
           @click="$emit('to-book', item)"
         >
-          <div class="item-price">￥{{ item.price }}</div>
+          <div class="item-price">
+            <span v-if="item.ecoPrice !== '暂无报价'">￥{{ item.ecoPrice }}</span>
+            <span v-else>{{ item.ecoPrice }}</span>
+          </div>
           <div class="item-btn">预订</div>
         </div>
       </div>
@@ -34,6 +37,7 @@
 <script>
 import cityArrow from "@/assets/iconImages/timeArrow.png";
 import calendarIcon from "@/assets/iconImages/calendarIcon.png";
+
 export default {
   props: {
     title: {
@@ -42,7 +46,7 @@ export default {
     },
     cardList: {
       type: Array,
-      default: () => {}
+      default: () => []
     }
   },
   data() {
@@ -56,6 +60,7 @@ export default {
 
 <style lang="stylus" scoped>
 @import '../../../stylus/common.styl';
+
 .card {
   background-color: #fff;
   padding: 10 * $px;
@@ -96,7 +101,7 @@ export default {
           margin-top: 6 * $px;
           margin-bottom: 8 * $px;
           img {
-            displsy: block;
+            display: block;
             width: 14 * $px;
             margin-right: 5 * $px;
           }
@@ -128,4 +133,3 @@ export default {
   }
 }
 </style>
-
