@@ -162,27 +162,32 @@ export default {
         };
         console.log("正在发送请求数据:", passengerData);
 
-        const response = await axios.post(
-          "/user/addpassenger",
-          passengerData,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-            withCredentials: true
-          }
-        );
+        const response = await axios.post('/user/addpassenger', {
+          passengerId: this.idNumber,
+          passengerName: this.name,
+          phone: this.phone
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          withCredentials: true  // 确保带有凭证的请求（如 Cookies）发送
+        });
 
         console.log("接口返回数据:", response.data);
-
+        console.log(response.data.code);
         // 处理返回结果
-        if (response && response.data && response.data.code === 200) {
-          this.pasgerList.push(passengerData);
-          this.data.res[this.uid].info.pasgerList = this.pasgerList;
-
-          // 更新 localStorage 数据
-          localStorage.setItem("user-data", JSON.stringify(this.data));
+        if (response.data.code === 200) {
+          console.log(response.data.code);
+          // this.pasgerList.push(passengerData);
+          // this.data.res[this.uid].info.pasgerList = this.pasgerList;
+          //
+          // // 更新 localStorage 数据
+          // localStorage.setItem("user-data", JSON.stringify(this.data));
 
           this.$toast.center("保存成功");
-          this.$router.go(-1); // 返回上一页面
+          this.$router.push({
+            path: "/passager",
+          });  // 返回上一页面
         } else {
           this.$toast.center("添加失败: " + (response.data.message || "未知错误"));
           console.error("接口返回错误:", response.data);
@@ -192,10 +197,7 @@ export default {
         this.$toast.center("请求失败，请稍后再试");
       }
     }
-
-
   }
-
 };
 </script>
 

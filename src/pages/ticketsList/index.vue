@@ -171,9 +171,9 @@ export default {
             ecoPrice: item.ecoPrice, // 假设我们取经济舱价
             headPrice: item.headPrice,
             depAirport: item.flightStartPlace,
-            arrAirport: item.flightTargetPlace
+            arrAirport: item.flightTargetPlace,
+            planId: item.planId
           }))];
-
           console.log('ticketList', this.ticketList);
         } else {
           console.log('未找到航班数据');
@@ -201,11 +201,12 @@ export default {
           depTime: item.depTime,
           arrTime: item.arrTime,
           ecoPrice: item.ecoPrice,
-          headPrice: item.headPrice,
+          headPrice: item.headPrice, // Add headPrice to the query parameters
           depDate: this.depDate,
           flightNo: this.flightNo,
           depAirport: item.depAirport,
           arrAirport: item.arrAirport,
+          planId: item.planId,
           from: 'ticketList'
         }
       });
