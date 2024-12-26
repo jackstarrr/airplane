@@ -2,15 +2,13 @@
   <div class="recharge">
     <div class="recharge-title">账户充值</div>
     <div class="recharge-body">
-
       <input
         type="number"
         placeholder="输入充值金额"
         min="1"
         max="100000"
-        v-model="num"
+        v-model="balance"
       >
-
       <div class="recharge-body-desc">注意: 余额仅用于钱包支付，不可提现</div>
     </div>
     <div class="recharge-footer">
@@ -20,42 +18,53 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   data() {
     return {
-      num: null
+      balance: null, // 用户输入的充值金额
     };
   },
-  created() {
-    let query = this.$route.query;
-    this.uid = query.uid;
-    let data = localStorage.getItem('user-data');
-    data = JSON.parse(data);
-    let dataList = data.res;
-    this.dataList = dataList;
-    this.userInfo = dataList[this.uid].info;
-    console.log(this.userInfo.balance);
-  },
   methods: {
-    submit() {
+    async submit() {
+      // 验证用户输入的金额是否符合规则
       let reg = /^([1-9]\d{0,4}|100000)$/;
-      if (!reg.test(this.num)) {
-        this.$toast.center('仅能输入1-100000的整数');
-        return false;
-      } else {
-        this.userInfo.balance = parseInt(this.userInfo.balance) + parseInt(this.num);
-        this.dataList[this.uid].info = this.userInfo;
-        let data = {
-          res: this.dataList
-        };
-        data = JSON.stringify(data);
-        localStorage.setItem('user-data', data);
-
-        this.$toast.center('充值成功！');
-        this.$router.back(-1);
+      if (!reg.test(this.balance)) {
+        this.$toast.center("仅能输入1-100000的整数");
+        return;
       }
-    }
-  }
+
+      try {
+        // 检查是否存在 token
+        const token = localStorage.getItem("token");
+        if (!token) {
+          this.$toast.center("未登录或登录信息已过期，请重新登录");
+          this.$router.replace("/login");
+          return;
+        }
+
+        // 调用后端接口传输数据
+        const response = await axios.get("/user/rechargeBalance", {
+          params: { balance: this.balance }, // 发送 balance 参数
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        });
+
+        // 处理返回结果
+        if (response && response.data && response.data.code === 200) {
+          this.$toast.center(response.data.data || "充值成功！");
+          this.$router.go(-1); // 返回上一页面
+        } else {
+          this.$toast.center("充值失败: " + (response.data.message || "未知错误"));
+          console.error("接口返回错误:", response.data);
+        }
+      } catch (error) {
+        console.error("请求失败:", error.message || error);
+        this.$toast.center("请求失败，请稍后再试");
+      }
+    },
+  },
 };
 </script>
 
@@ -106,4 +115,3 @@ export default {
   }
 }
 </style>
-

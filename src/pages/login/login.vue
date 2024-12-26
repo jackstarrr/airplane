@@ -86,7 +86,7 @@ export default {
           this.$toast.bottom("登录成功");
 
           // 后端返回的 token 存储
-          const token = response.data.message; // 后端返回的 token
+          const token = response.data.data; // 后端返回的 token
           localStorage.setItem("token", token); // 将 token 存储到 localStorage（可根据实际需要选择存储方式）
 
           this.$router.push({

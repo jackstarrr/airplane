@@ -50,94 +50,121 @@
 </template>
 
 <script>
+import axios from "axios";
 import avator from "./imgs/avator.jpg";
 import orderIcon from "@/assets/iconImages/order.png";
-import passagerIcon from '@/assets/iconImages/passager.png';
+import passagerIcon from "@/assets/iconImages/passager.png";
+
 export default {
   data() {
     return {
       avator: avator,
       orderIcon: orderIcon,
       passagerIcon: passagerIcon,
-      balance: null,
-      userName: ''
+      balance: null, // 用户余额
+      userName: "", // 用户名
     };
   },
   created() {
-    let query = this.$route.query;
-    this.uid = query.uid;
-    let data = localStorage.getItem('user-data');
-    let user = localStorage.getItem('users');
-    user = JSON.parse(user).list[this.uid];
-    this.userName = user.name;
-    data = JSON.parse(data);
-    let dataList = data.res;
-    this.userInfo = dataList[this.uid].info;
-    this.balance = this.userInfo.balance;
+    this.fetchUserInfo(); // 获取用户信息
   },
   methods: {
+    // 获取用户信息
+    async fetchUserInfo() {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          this.$toast.center("未登录或登录信息已过期，请重新登录");
+          this.$router.replace("/login");
+          return;
+        }
+
+        // 发起 POST 请求
+        const response = await axios.post(
+          "/user/show",
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            withCredentials: true,
+          }
+        );
+
+        if (response && response.data && response.data.code === 200) {
+          const userData = response.data.data;
+          this.userName = userData.username; // 设置用户名
+          this.balance = userData.balance; // 设置余额
+        } else {
+          this.$toast.center("获取用户信息失败: " + (response.data.message || "未知错误"));
+          console.error("接口返回错误:", response.data);
+        }
+      } catch (error) {
+        console.error("请求失败:", error.message || error);
+        this.$toast.center("请求失败，请稍后再试");
+      }
+    },
+    // 跳转充值页面
+    toRecharge() {
+      this.$router.push({
+        path: "/recharge",
+        query: {
+          uid: this.uid,
+        },
+      });
+    },
     // 跳转订单列表
     goOrderList() {
       this.$router.push({
-        path: '/orderList',
+        path: "/orderList",
         query: {
-          uid: this.uid
-        }
-      })
+          uid: this.uid,
+        },
+      });
     },
     // 跳转乘机人页面
     goPassager() {
       this.$router.push({
-        path: '/passager',
+        path: "/passager",
         query: {
-          uid: this.uid
-        }
-      })
-    },
-    // 跳转个人信息页面
-    goUserInformation() {
-      this.$router.push({
-        path: '/userInformation',
-        query: {
-          uid: this.uid
-        }
-      })
+          uid: this.uid,
+        },
+      });
     },
     // 跳转修改密码页面
     goUpdatePassword() {
       this.$router.push({
-        path: '/updatePassword',
+        path: "/updatePassword",
         query: {
-          uid: this.uid
-        }
-      })
+          uid: this.uid,
+        },
+      });
     },
     // 跳转修改信息页面
     goUpdateInformation() {
       this.$router.push({
-        path: '/updateInformation',
+        path: "/updateInformation",
         query: {
-          uid: this.uid
-        }
-      })
+          uid: this.uid,
+        },
+      });
     },
-    toRecharge() {
+    // 跳转用户信息页面
+    goUserInformation() {
       this.$router.push({
-        path: '/recharge',
+        path: "/userInformation",
         query: {
-          uid: this.uid
-        }
-      })
-    }
-  }
+          uid: this.uid,
+        },
+      });
+    },
+  },
 };
 </script>
 
 <style lang="stylus" scoped>
-@import '../../stylus/common.styl';
+@import "../../stylus/common.styl";
 .user {
   &-header {
-    background: url('./imgs/head.jpg');
+    background: url("./imgs/head.jpg");
     background-size: cover;
     padding: 30 * $px 15 * $px 10 * $px 15 * $px;
     &-title {
@@ -174,7 +201,7 @@ export default {
         font-size: 19 * $px;
       }
       img {
-        display block;
+        display: block;
         width: 30 * $px;
         height: 30 * $px;
       }
@@ -182,5 +209,3 @@ export default {
   }
 }
 </style>
-
-
