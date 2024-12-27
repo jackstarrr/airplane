@@ -14,74 +14,121 @@
         <div class="head fx-row fx-m-between">
           <div class="city-line fx-row">
             <img :src="flightIcon" />
-            <div class="dep">{{ item.ticketCard.depCity }}</div>
+            <div class="dep">{{ item.depcity }}</div>
             <img :src="rightIcon" />
-            <div class="arr">{{ item.ticketCard.arrCity }}</div>
+            <div class="arr">{{ item.arrcity }}</div>
           </div>
 
           <div class="status">已出票</div>
         </div>
         <div class="content">
           <div class="date">
-            <span>{{ item.ticketCard.depDate }}</span>
-            <span>{{ item.ticketCard.flightWeek }}</span>
-            <span>{{ item.ticketCard.depTime }}</span>
+            <span>{{ item.flightStartTime }}</span>
+            <span>{{ item.flightWeek }}</span>
+            <span>{{ item.flightTargetTime }}</span>
           </div>
           <div class="type">单程</div>
-          <div class="order-time">下单时间：{{ item.time }} </div>
-          <div class="price">￥{{ item.price }}</div>
+          <div class="order-time">下单时间：{{ item.orderTime }} </div>
+          <div class="price">￥{{ item.totalAmount }}</div>
         </div>
         <div class="footer">
           <div class="pasger">
             <span class="desc">乘机人</span>
-            <span>{{ item.passager.name }}</span>
+            <span>{{ item.passengers[0].passengerName }}</span>
           </div>
         </div>
       </div>
     </div>
     <div class="nothing" v-if="orderList.length == 0">
-      <img :src="nothingIcon" alt="">
+      <img :src="nothingIcon" alt=""/>
       <div class="nothing-desc">还没有订单，快去下单吧！</div>
     </div>
   </div>
 </template>
 
+
 <script>
 import flightIcon from "@/assets/iconImages/orderFlight.png";
 import rightIcon from "@/assets/iconImages/swapRight.png";
 import nothingIcon from "@/assets/iconImages/nothing.png";
+import axios from 'axios';
+
 export default {
   data() {
     return {
       orderList: [],
       flightIcon: flightIcon,
       rightIcon: rightIcon,
-      nothingIcon: nothingIcon
+      nothingIcon: nothingIcon,
+      orderId: null
     };
   },
   created() {
-    let query = this.$route.query;
-    this.uid = query.uid;
-    let data = localStorage.getItem("user-data");
-    data = JSON.parse(data);
-    this.data = data;
-    let dataList = data.res;
-    this.userInfo = dataList[this.uid].info;
-    this.orderList = this.userInfo.orderList || [];
+    this.fetchOrderList();
   },
   methods: {
+    async fetchOrderList() {
+      const token = localStorage.getItem('token');
+      const pageNum = 1;
+      const pageSize = 10;
+      //const orderStatus = 0;
+
+      try {
+        const response = await axios.get('/order/list', {
+          params: {
+            pageNum: pageNum,
+            pageSize: pageSize,
+            //orderStatus: orderStatus,
+            token: token
+          },
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          withCredentials: true
+        });
+        console.log("orderList", response.data);
+        if (response.data.code === 200) {
+          this.orderId = response.data.data.records[0].orderId;
+          const orders = response.data.data.records;
+          this.orderList = orders.map(order => {
+            // Format the order data to fit the template's data structure
+            return {
+              orderId: order.orderId,
+              orderTime: `${order.createTime[0]}-${order.createTime[1]}-${order.createTime[2]} ${order.createTime[3]}:${order.createTime[4]}:${order.createTime[5]}`, // Format order time
+              totalAmount: order.totalAmount,
+              depcity: order.depcity,
+              arrcity: order.arrcity,
+              flightStartTime: order.flightStartTime,
+              flightTargetTime: order.flightTargetTime,
+              flightWeek: this.getFlightWeek(order.flightDate[2]), // You can add logic to get the flight week
+              passengers: order.passengers
+            };
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch order list:", error);
+      }
+    },
+    getFlightWeek(day) {
+      // Add logic to determine the flight week based on the day of the week
+      const weeks = ["日", "一", "二", "三", "四", "五", "六"];
+      const date = new Date();
+      date.setDate(day);
+      return `星期${weeks[date.getDay()]}`;
+    },
     goDetail(index) {
+      console.log(this.orderId);
       this.$router.push({
         path: "/orderDetail",
         query: {
-          uid: this.uid,
-          orderNo: index
+          orderId: this.orderId
         }
       });
     }
   }
 };
 </script>
+
 
 <style lang="stylus" scoped>
 @import '../../stylus/common.styl';
@@ -171,5 +218,3 @@ export default {
   }
 }
 </style>
-
-

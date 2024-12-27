@@ -94,6 +94,7 @@ export default {
       try {
         console.log("ybc", city, type);
         const token = localStorage.getItem('token');
+        console.log('token', token)
         const response = await axios.post('/airport/search', {
           city: city
         }, {
@@ -104,7 +105,7 @@ export default {
         });
         if (response.data.code == 200) {
           const airportData = response.data.data;
-          if (type === 0) {
+          if (type == 0) {
             // 出发机场数据
             this.depAirportData = airportData;
             console.log('depAirportData', this.depAirportData);

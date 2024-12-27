@@ -2,18 +2,19 @@
   <div class="detail">
     <div class="detail-status">已出票</div>
     <ticket-card
-      :flight-date="this.order.ticketCard.flightDate"
-      :flight-week="this.order.ticketCard.flightWeek"
-      :dep-city="this.order.ticketCard.depCity"
-      :arr-city="this.order.ticketCard.arrCity"
-      :dep-airport="this.order.ticketCard.depAirport"
-      :arr-airport="this.order.ticketCard.arrAirport"
-      :flight-no="this.order.ticketCard.flightNo"
-      :dep-time="this.order.ticketCard.depTime"
-      :arr-time="this.order.ticketCard.arrTime"
-      :dep-date="this.order.ticketCard.depDate"
-      :arr-date="this.order.ticketCard.arrDate"
+      :flight-date="order.flightDate"
+      :flight-week="order.flightWeek"
+      :dep-city="order.depcity"
+      :arr-city="order.arrcity"
+      :dep-airport="order.flightStartPlace"
+      :arr-airport="order.flightTargetPlace"
+      :flight-no="order.flightNo"
+      :dep-time="order.flightStartTime"
+      :arr-time="order.flightTargetTime"
+      :dep-date="order.flightDate"
+      :arr-date="order.arrDate"
     ></ticket-card>
+
     <div class="pasger-card">
       <div class="card-title">乘机人信息</div>
       <div
@@ -25,6 +26,7 @@
         <div class="item-desc">{{ item.desc }}</div>
       </div>
     </div>
+
     <div class="pasger-card">
       <div class="card-title">订单信息</div>
       <div
@@ -36,59 +38,80 @@
         <div class="item-desc">{{ item.desc }}</div>
       </div>
     </div>
-
   </div>
 </template>
 
 <script>
 import ticketCard from "@/pages/book/components/ticketCard";
+import axios from 'axios';
+
 export default {
   data() {
     return {
       pasger: [],
-      orderCard: []
+      orderCard: [],
+      order: {}  // Store the fetched order data here
     };
   },
   created() {
-    let query = this.$route.query;
-    this.uid = query.uid;
-    let orderNo = query.orderNo;
-    let data = localStorage.getItem("user-data");
-    data = JSON.parse(data);
-    this.data = data;
-    let dataList = data.res;
-    this.userInfo = dataList[this.uid].info;
-    this.orderList = this.userInfo.orderList;
-    this.order = this.orderList[orderNo];
+    const query = this.$route.query;
+    const { orderId } = query;  // Only retrieve orderId from the URL
 
-    this.pasger = [
-      { title: "乘机人", desc: this.order.passager.name },
-      {
-        title: "身份证号",
-        desc: this.order.passager.idNo
-      },
-      {
-        title: "联系电话",
-        desc: this.order.passager.phone
-      }
-    ];
+    this.orderId = orderId;  // Save the orderId for the API request
 
-    this.orderCard = [
-      {
-        title: '订单金额',
-        desc: '￥' + this.order.price
-      },
-      {
-        title: '订单号',
-        desc: this.order.orderId
+    // Fetch the order detail from the backend
+    this.fetchOrderDetail();
+  },
+  methods: {
+    async fetchOrderDetail() {
+      const token = localStorage.getItem('token');
+      console.log("orderId", this.orderId);
+      try {
+        const response = await axios.get(`/order/detail/${this.orderId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          withCredentials: true
+        });
+        console.log("orderDetail", response.data);
+        if (response.data.code === 200) {
+          const orderData = response.data.data;
+
+          // Update order with backend data
+          this.order = {
+            ...orderData,  // Retain all the backend data
+            flightWeek: this.getFlightWeek(orderData.flightDate),  // Calculate the flight week
+          };
+
+          // Update passenger info
+          this.pasger = [
+            { title: "乘机人", desc: orderData.passengers[0].passengerName },
+            { title: "身份证号", desc: orderData.passengers[0].idNumber },
+            { title: "联系电话", desc: orderData.passengers[0].phone }
+          ];
+
+          // Update order info
+          this.orderCard = [
+            { title: '订单金额', desc: '￥' + orderData.totalAmount },
+            { title: '订单号', desc: orderData.orderId }
+          ];
+        }
+      } catch (error) {
+        console.error("Failed to fetch order detail:", error);
       }
-    ]
+    },
+    getFlightWeek(date) {
+      const weeks = ["日", "一", "二", "三", "四", "五", "六"];
+      const flightDate = new Date(date[0], date[1] - 1, date[2]);  // Convert to Date object
+      return `星期${weeks[flightDate.getDay()]}`;
+    }
   },
   components: {
     ticketCard
   }
 };
 </script>
+
 
 <style lang="stylus" scoped>
 @import '../../stylus/common.styl';
